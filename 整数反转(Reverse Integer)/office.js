@@ -9,20 +9,20 @@ var reverse = function(x) {
     const round = x > 0 ? Math.floor : Math.ceil;
     x = round(x / 10);
     /*
-     *  Math.pow(2, 31) - 1 === 2147483647
+     *  2 ** 31 - 1 === 2147483647
      */
     if (
-      rev > (Math.pow(2, 31) - 1) / 10 ||
-      (rev === Math.floor((Math.pow(2, 31) - 1) / 10) && pop > 7)
+      rev > (2 ** 31 - 1) / 10 ||
+      (rev === Math.floor((2 ** 31 - 1) / 10) && pop > 7)
     ) {
       return 0;
     }
     /*
-     *  -Math.pow(2, 31) === -2147483648
+     *  -2 ** 31 === -2147483648
      */
     if (
-      rev < -Math.pow(2, 31) / 10 ||
-      (rev === Math.floor(-Math.pow(2, 31) / 10) && pop < -8)
+      rev < -(2 ** 31) / 10 ||
+      (rev === Math.floor(-(2 ** 31) / 10) && pop < -8)
     ) {
       return 0;
     }
