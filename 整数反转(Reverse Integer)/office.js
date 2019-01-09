@@ -38,6 +38,7 @@ var reverse = function(x) {
  */
 
 /**
- * Time Complexity: O(log(x)). There are roughly log_{10}(x) digits in x.
+ * Time Complexity: O(log(x)).
+ * There are roughly O(log10(x)) digits in x.
  * Space Complexity: O(1).
  */
