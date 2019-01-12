@@ -22,6 +22,9 @@ class TreeNode {
     };
   }
   findTreeNode(char, node) {
+    return this.links[char.charCodeAt() - "a".charCodeAt()];
+  }
+  hasTreeNode(char, node) {
     return (
       !!this.links[char.charCodeAt() - "a".charCodeAt()] &&
       this.links[char.charCodeAt() - "a".charCodeAt()].word === node
@@ -78,12 +81,12 @@ class TrieTree {
       this.insert(str);
     });
   }
-  find(str) {
+  has(str) {
     let dummyNode = this.root;
     return Array.prototype.every.call(str, (v, index) => {
       if (dummyNode.next) {
         // console.log(v)
-        if (dummyNode.next.findTreeNode(v, str.slice(0, index + 1))) {
+        if (dummyNode.next.hasTreeNode(v, str.slice(0, index + 1))) {
           dummyNode = dummyNode.next;
           return true;
         }
@@ -93,8 +96,8 @@ class TrieTree {
       }
     });
   }
-  batch_find(strs) {
-    return strs.filter(str => this.find(str));
+  batch_has(strs) {
+    return strs.filter(str => this.has(str));
   }
   delete(str) {
     let dummyNode = this.root;
@@ -108,10 +111,63 @@ class TrieTree {
       this.delete(str);
     });
   }
+  sort() {}
+  find(str) {
+    let dummyNode = this.root;
+    let result = {};
+    Array.prototype.every.call(str, (v, index) => {
+      if (dummyNode.next) {
+        // console.log(v)
+        if (dummyNode.next.hasTreeNode(v, str.slice(0, index + 1))) {
+          if (index === str.length - 1) {
+            // console.log(result)
+            result = dummyNode.next.findTreeNode(v, str);
+          }
+          dummyNode = dummyNode.next;
+          return true;
+        }
+        return false;
+      } else {
+        return false;
+      }
+    });
+    return result;
+  }
+  findWordCount(str) {
+    return this.find(str).wordCount;
+  }
+  findCommonPrefix(strs) {
+    let minCommonPrefix = "";
+    let dummyNode = this.root;
+    const minLength =
+      strs.length > 0 &&
+      strs.reduce(
+        (length, str) => Math.min(length, str.length),
+        strs[0].length
+      );
+    Array.from({ length: minLength }).some((v, index) => {
+      dummyNode.next = new TreeNode();
+      const node = strs[0].slice(0, index + 1);
+      strs.forEach(str => {
+        dummyNode.next.addTreeNode(str[index], node);
+      });
+      // console.log(JSON.stringify(this.root))
+      const result =
+        dummyNode.next.links[strs[0][index].charCodeAt() - "a".charCodeAt()];
+      if (result.size !== strs.length) {
+        return true;
+      }
+      minCommonPrefix = node;
+      return false;
+    });
+    return minCommonPrefix;
+  }
 }
 
-const tree = new TrieTree(["he", "hi", "his", "she", "her", "hers"]);
+// const tree = new TrieTree(["he", "hi", "his", "she", "her", "hers", 'her']);
 // console.log(tree.batch_find(["he",'hi','his','she','herd','hers']));
 // tree.batch_delete(['his', 'she', 'her'])
 // tree.delete("sand");
-console.log(JSON.stringify(tree));
+const tree = new TrieTree();
+console.log(tree.findCommonPrefix([""]));
+// console.log(JSON.stringify(tree));
