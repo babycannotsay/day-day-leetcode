@@ -1,173 +1,192 @@
 class TreeNode {
-  constructor(char, node, isWord) {
-    this.links = {};
-    this.addTreeNode(char, node, isWord);
+  constructor(chars, index) {
+    this.add(chars, index);
   }
-  addTreeNode(char = "a", node = null, isWord) {
-    if (node === null) {
+  add(chars = "", index = 0) {
+    if (chars.length === 0 || chars.length === index) {
       return;
     }
-    const link = this.links[char.charCodeAt() - "a".charCodeAt()];
-    if (link) {
-      link.size++;
-      if (isWord) {
-        link.wordCount++;
+    if (this[chars[index]]) {
+      this[chars[index]].size++;
+      if (chars.length - 1 === index) {
+        this[chars[index]].wordCount++;
       }
+      this[chars[index]].next.add(chars, index + 1);
       return;
     }
-    this.links[char.charCodeAt() - "a".charCodeAt()] = {
-      word: node,
+    this[chars[index]] = {
       size: 1,
-      wordCount: isWord ? 1 : 0
+      word: chars.slice(0, index + 1),
+      wordCount: index === chars.length - 1 ? 1 : 0,
+      next:
+        index === chars.length - 1
+          ? new TreeNode()
+          : new TreeNode(chars, index + 1)
     };
   }
-  findTreeNode(char, node) {
-    return this.links[char.charCodeAt() - "a".charCodeAt()];
-  }
-  hasTreeNode(char, node) {
-    return (
-      !!this.links[char.charCodeAt() - "a".charCodeAt()] &&
-      this.links[char.charCodeAt() - "a".charCodeAt()].word === node
-    );
-  }
-  deleteTreeNode(char = "a", isWord) {
-    const link = this.links[char.charCodeAt() - "a".charCodeAt()];
-    if (!link) {
-      return;
-    }
-    if (link) {
-      if (--link.size === 0) {
-        delete this.links[char.charCodeAt() - "a".charCodeAt()];
-        return;
+  search(nodes = "") {
+    if (this[nodes[0]]) {
+      if (nodes.length === 1 && this[nodes[0]].wordCount > 0) {
+        return this[nodes[0]];
       }
-      if (isWord) {
-        this.links[char.charCodeAt() - "a".charCodeAt()].wordCount--;
-      }
-      return;
+      return this[nodes[0]].next.search(nodes.slice(1));
     }
+    return null;
   }
-}
-class TrieTree {
-  constructor(nodes) {
-    this.root = new TreeNode();
-    if (typeof nodes === "string") {
-      this.insert(nodes);
-    } else if (Array.isArray(nodes) && nodes.length > 0) {
-      this.batch_insert(nodes);
-    }
-  }
-  insert(str) {
-    let dummyNode = this.root;
-    Array.prototype.forEach.call(str, (v, index) => {
-      if (dummyNode.next) {
-        // console.log(v)
-        dummyNode.next.addTreeNode(
-          v,
-          str.slice(0, index + 1),
-          index === str.length - 1
-        );
-      } else {
-        dummyNode.next = new TreeNode(
-          v,
-          str.slice(0, index + 1),
-          index === str.length - 1
-        );
+  has(nodes = "") {
+    if (this[nodes[0]]) {
+      if (nodes.length === 1) {
+        return this[nodes[0]];
       }
-      dummyNode = dummyNode.next;
-    });
+      return this[nodes[0]].next.has(nodes.slice(1));
+    }
+    return null;
   }
-  batch_insert(strs) {
-    strs.forEach(str => {
-      this.insert(str);
-    });
-  }
-  has(str) {
-    let dummyNode = this.root;
-    return Array.prototype.every.call(str, (v, index) => {
-      if (dummyNode.next) {
-        // console.log(v)
-        if (dummyNode.next.hasTreeNode(v, str.slice(0, index + 1))) {
-          dummyNode = dummyNode.next;
-          return true;
+  delete(nodes = "") {
+    if (this[nodes[0]]) {
+      if (nodes.length === 1) {
+        this[nodes[0]].size--;
+        this[nodes[0]].wordCount--;
+        if (this[nodes[0]].size === 0) {
+          delete this[nodes[0]];
         }
-        return false;
-      } else {
-        return false;
+        return Object.keys(this).length === 0;
       }
-    });
-  }
-  batch_has(strs) {
-    return strs.filter(str => this.has(str));
-  }
-  delete(str) {
-    let dummyNode = this.root;
-    Array.prototype.forEach.call(str, (v, index) => {
-      dummyNode.next.deleteTreeNode(v, str.length - 1 === index);
-      dummyNode = dummyNode.next;
-    });
-  }
-  batch_delete(strs) {
-    strs.forEach(str => {
-      this.delete(str);
-    });
-  }
-  sort() {}
-  find(str) {
-    let dummyNode = this.root;
-    let result = {};
-    Array.prototype.every.call(str, (v, index) => {
-      if (dummyNode.next) {
-        // console.log(v)
-        if (dummyNode.next.hasTreeNode(v, str.slice(0, index + 1))) {
-          if (index === str.length - 1) {
-            // console.log(result)
-            result = dummyNode.next.findTreeNode(v, str);
-          }
-          dummyNode = dummyNode.next;
-          return true;
+      if (this[nodes[0]].next.delete(nodes.slice(1))) {
+        this[nodes[0]].size--;
+        if (this[nodes[0]].size === 0) {
+          delete this[nodes[0]];
         }
-        return false;
-      } else {
-        return false;
+        return Object.keys(this).length === 0;
       }
-    });
-    return result;
+    }
+    return;
   }
-  findWordCount(str) {
-    return this.find(str).wordCount;
-  }
-  findCommonPrefix(strs) {
-    let minCommonPrefix = "";
-    let dummyNode = this.root;
-    const minLength =
-      strs.length > 0 &&
-      strs.reduce(
-        (length, str) => Math.min(length, str.length),
-        strs[0].length
-      );
-    Array.from({ length: minLength }).some((v, index) => {
-      dummyNode.next = new TreeNode();
-      const node = strs[0].slice(0, index + 1);
-      strs.forEach(str => {
-        dummyNode.next.addTreeNode(str[index], node);
-      });
-      // console.log(JSON.stringify(this.root))
-      const result =
-        dummyNode.next.links[strs[0][index].charCodeAt() - "a".charCodeAt()];
-      if (result.size !== strs.length) {
+  startsWith(nodes = "") {
+    if (this[nodes[0]]) {
+      if (nodes.length === 1) {
         return true;
       }
-      minCommonPrefix = node;
-      return false;
-    });
-    return minCommonPrefix;
+      return this[nodes[0]].next.startsWith(nodes.slice(1));
+    }
+    return false;
+  }
+  startsWith(nodes = "") {
+    let next = this;
+    let len = nodes.length;
+    while (len > 0) {
+      if (next[nodes[0]]) {
+        next = next[nodes[0]].next;
+        nodes = nodes.slice(1);
+        len--;
+      } else {
+        break;
+      }
+    }
+    return len === 0;
   }
 }
 
-// const tree = new TrieTree(["he", "hi", "his", "she", "her", "hers", 'her']);
-// console.log(tree.batch_find(["he",'hi','his','she','herd','hers']));
-// tree.batch_delete(['his', 'she', 'her'])
-// tree.delete("sand");
+class TrieTree {
+  constructor(nodes) {
+    this.root = new TreeNode();
+    this.insert(nodes);
+  }
+  insert(nodes) {
+    if (typeof nodes === "string") {
+      this.root.add(nodes);
+    } else if (Array.isArray(nodes)) {
+      nodes.forEach(node => this.root.add(node));
+    }
+  }
+  delete(nodes) {
+    if (typeof nodes === "string") {
+      this.root.delete(nodes);
+    } else if (Array.isArray(nodes)) {
+      nodes.forEach(node => this.root.delete(node));
+    }
+  }
+  find(nodes) {
+    if (typeof nodes === "string") {
+      return this.root.search(nodes);
+    } else if (Array.isArray(nodes)) {
+      return nodes.map(node => this.root.search(node));
+    }
+  }
+  startsWith(prefix) {
+    return this.root.startsWith(prefix);
+  }
+  findWordCount(nodes) {
+    if (typeof nodes === "string") {
+      return this.find(nodes).wordCount;
+    } else if (Array.isArray(nodes)) {
+      return nodes.map(node => (this.find(node) || { wordCount: 0 }).wordCount);
+    }
+  }
+  has(nodes) {
+    return this.root.has(nodes);
+  }
+  findCommonPrefix(nodes) {
+    if (nodes.length === 0) return "";
+    this.insert(nodes);
+
+    let fisrtNode = nodes[0];
+    let len = fisrtNode.length;
+    let i = 0;
+    for (; i < len; i++) {
+      const has = this.has(fisrtNode.slice(0, i + 1));
+      if (has === null || has.size !== nodes.length) {
+        break;
+      }
+    }
+    return fisrtNode.slice(0, i);
+  }
+  sort(dummyNode = this.root, arr = []) {
+    if (dummyNode === this.root) {
+      Object.keys(dummyNode)
+        .sort()
+        .forEach(key => {
+          Array.from({ length: dummyNode[key].wordCount }).forEach(() => {
+            arr.push(dummyNode[key].word);
+          });
+          this.sort(dummyNode[key].next, arr);
+        });
+      return arr;
+    } else if (Object.keys(dummyNode).length > 0) {
+      Object.keys(dummyNode).forEach(node => {
+        Array.from({ length: dummyNode[node].wordCount }).forEach(() => {
+          arr.push(dummyNode[node].word);
+        });
+        this.sort(dummyNode[node].next, arr);
+      });
+      return arr;
+    }
+  }
+}
+
+// console.log(
+//   JSON.stringify(new TrieTree(["he", 'hi', 'his', 'she', 'hi']))
+// );
+// const tree = new TrieTree([
+//   // "he",
+//   // "hi",
+//   // "hello",
+//   // "da",
+//   // "dall",
+//   // "his",
+//   // "she",
+//   // "her",
+//   // "hers",
+//   // "her",
+//   // "abgvj"
+//   'apple',
+// ]);
 const tree = new TrieTree();
-console.log(tree.findCommonPrefix([""]));
+// console.log(tree.startsWith('app'))
+// tree.delete(['abgvj', 'he', 'hi'])
 // console.log(JSON.stringify(tree));
+console.log(tree.findCommonPrefix(["flower", "flow", "flight"]));
+// console.log(tree.findCommonPrefix(["abc", 'abca']));
+// console.log(tree.find(["hi", "herd", "a"]));
+// console.log(tree.findWordCount(["hi", "herd", "a", "her"]));
+// console.log(JSON.stringify(tree.sort()));
